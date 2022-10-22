@@ -4,6 +4,8 @@ import user from "./model/user.js";
 import jwt from "jsonwebtoken";
 import userToken from "./model/userToken.js";
 import moment from "moment";
+import userRole from "./model/userRole.js";
+import rolePermissions from "./model/rolePermissions.js";
 
 const { TokenExpiredError } = jwt;
 
@@ -79,6 +81,8 @@ export async function createUser(req, res) {
 
 export async function getData(req, res) {
   const { email, token } = req.body;
+
+  //Authentication
   if (!email) {
     return res.status(400).json({ message: "Please provide an email" });
   }
@@ -87,13 +91,50 @@ export async function getData(req, res) {
     return res.status(401).json({ message: "Please provide an token" });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET_KEY, (err, decoded) => {
-    if (err instanceof TokenExpiredError) {
-      return res.status(401).send({ message: "Access Token expired!" });
+  const result = jwt.verify(
+    token,
+    process.env.JWT_SECRET_KEY,
+    (err, decoded) => {
+      if (err instanceof TokenExpiredError) {
+        return {
+          status: 401,
+          message: "Access Token expired!",
+        };
+      }
+      if (!!!decoded || email != decoded.email) {
+        return {
+          status: 401,
+          message: "Unauthorized!",
+        };
+      }
+      return {
+        status: 200,
+        message: "SUCCESS",
+      };
     }
-    if (email != decoded.email) {
-      return res.status(401).send({ message: "Unauthorized!" });
-    }
-    return res.status(200).send({ message: "SUCCESS" });
+  );
+
+  if (result.status == 401) {
+    return res.status(401).send({ message: result.message });
+  }
+
+  //Authorization
+  const roleResult = await userRole.findOne({ email: email });
+  if (!roleResult) {
+    return res.status(403).send({ message: "You do not have a role" });
+  }
+
+  const permissions = await rolePermissions.findOne({
+    role: roleResult.role,
+    type: "GET",
+    route: "/retrieveData",
   });
+
+  if (!permissions) {
+    return res
+      .status(403)
+      .send({ message: "You do not have the permission for this request" });
+  }
+
+  return res.status(200).send({ message: "SUCCESS" });
 }

@@ -1,11 +1,10 @@
 import mongoose from "mongoose";
 
 const Schema = mongoose.Schema;
-let userPermissionSchema = new Schema({
-  email: {
+let rolePermissionModel = new Schema({
+  role: {
     type: String,
     required: true,
-    unique: true,
   },
   type: {
     type: String,
@@ -17,4 +16,4 @@ let userPermissionSchema = new Schema({
   },
 });
 
-export default mongoose.model("UserPermissionModel", userPermissionSchema);
+export default mongoose.model("rolePermissionModel", rolePermissionModel);
