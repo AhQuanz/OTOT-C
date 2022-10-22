@@ -104,7 +104,7 @@ export async function getData(req, res) {
       if (!!!decoded || email != decoded.email) {
         return {
           status: 401,
-          message: "Unauthorized!",
+          message: "Not authenticated!",
         };
       }
       return {
@@ -133,7 +133,7 @@ export async function getData(req, res) {
   if (!permissions) {
     return res
       .status(403)
-      .send({ message: "You do not have the permission for this request" });
+      .send({ message: "You are not authorised for this request" });
   }
 
   return res.status(200).send({ message: "SUCCESS" });
